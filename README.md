@@ -1,47 +1,33 @@
 
-# RDD Transformations 2
+# RDD Transformations and Actions - II
+
+## Introduction
+
+Following our last lesson, here we will look at some more commonly used transformations and actions in pyspark. Spark offers a lot of RDD operations which can be accessed at the official documentation. In these labs, we are focusing on the key operations that are utilized in machin elearning practices to provide an alternative to data processing offered by the likes of Pandas DataFrames. 
+
 
 ## Objectives
+
 * Perform data retrieval from RDDs for exploratory purpose.
 * Understand the use of `first()`, `take()` and `top()` for retrieving data from RDDs.
 * Use `reduce()` action to reduce elements of an RDD to a single value. 
 * Sample data from RDDs using `takeSample()` and `countByValue()`
 
-### Introduction
+## Create RDDs
+
 This lab introduces more RDD transformations for selecting and retrieving data from distributed RDDs. Let's first import the code from our previous lab to re-create the `filteredRDD` and use `collect()` to view its contents. 
+
+- Create `intRDD` and `filteredRDD`, using from previous lab 
 
 
 ```python
 # Include all the code from previous lab to create FilteredRDD and view the contents. 
 
-import pyspark
-sc = pyspark.SparkContext('local[*]')
 
-def subtract(value):
-    return (value - 1)
+# Code here
 
-def lessThanTen(value):
-    if (value < 10):
-        return True
-    else:
-        return False
-    
-intRDD = sc.parallelize(range(1,1001),5)
-subRDD = intRDD.map(subtract)
-filteredRDD = subRDD.filter(lessThanTen)
-filteredRDD.collect()
 
 # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-```
-
-#### Bonus 
->You can also join a number of transformations to get the similar output as shown below. All the code from previous lab can be summarized in a neat manner as a one-liner. However, it is imperative that you must understand the function of each transformation and action before you try this, as these statements would be very difficult to debug.
-
-
-```python
-# One-liner for a multiple transformations
-
-sc.parallelize(range(1,1001),5).map(subtract).filter(lessThanTen).collect()
 ```
 
 
@@ -51,7 +37,28 @@ sc.parallelize(range(1,1001),5).map(subtract).filter(lessThanTen).collect()
 
 
 
-### `first()` vs. `take()` vs. `top()` actions
+#### Bonus 
+>You can also join a number of transformations to get the similar output as above. All the code from previous lab can be summarized in a neat manner as a one-liner. However, it is imperative that you must understand the function of each transformation and action before you try this, as these statements would be very difficult to debug.
+
+
+```python
+# Create an RDD from list (1-1000), subtract 1 from each element, ..
+# filter using lessThanTen() function and collect the results ..
+# .... in a single line 
+
+
+# Code here
+
+```
+
+
+
+
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+
+
+## `first()` vs. `take()` vs. `top()` Actions
 
 A very step into exploratory analysis is always to look at first few rows of the data to get an idea about the features of the dataset and datatypes. in pandas this is achoeved by calling `.head()`. A similar approach can be adopted while working with Spark. We have `first()`, `take()`, `top()` and `takeordered()` actions. 
 
@@ -67,7 +74,9 @@ Let's use these actions on the RDDs that we created in the previous lab.
 
 ```python
 # Get the first element of filteredRDD
-filteredRDD.first()
+
+# Code here
+
 
 # 0
 ```
@@ -82,7 +91,9 @@ filteredRDD.first()
 
 ```python
 # Get first three elements of filteredRDD
-filteredRDD.take(3)
+
+# Code here
+
 
 # [0, 1, 2]
 ```
@@ -99,7 +110,9 @@ Let's also see what happenes if we try to take more elements than RDD has. An er
 
 ```python
 # TRy taking more elements than RDD has
-filteredRDD.take(20)
+
+# Code here
+
 
 # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
@@ -113,7 +126,7 @@ filteredRDD.take(20)
 
 So it is okie to take more elements than the length of an RDD. It will return all the elements of RDD without generating an error. 
 
-### `takeOrdered()` action
+## `takeOrdered()` Action
 
 The `takeOrdered()` action returns the first n elements of the RDD, using either their natural order or some custom criteria. The key advantage of using `takeOrdered()` instead of `first()` or `take()` is that `takeOrdered()` returns a deterministic result, while the other two actions may return differing results, depending on the number of partions or execution environment. `takeOrdered()` returns the list sorted in ascending order. The `top()` action is similar to `takeOrdered()` except that it returns the list in descending order.
 
@@ -127,7 +140,10 @@ Let's use use these to observe the output from the filteredRDD
 
 ```python
 # Retrieve three smallest elements of filteredRDD
-filteredRDD.takeOrdered(3)
+
+
+# Code here
+
 
 # [0, 1, 2]
 ```
@@ -142,7 +158,10 @@ filteredRDD.takeOrdered(3)
 
 ```python
 # Retrieve the three largest elements
-filteredRDD.top(3)
+
+
+# Code here
+
 
 # [9, 8, 7]
 ```
@@ -157,13 +176,16 @@ filteredRDD.top(3)
 
 ```python
 # Use a lambda function with `takeOrdered()` to reverse the order of output
-print (filteredRDD.takeOrdered(3, lambda s: -s)) 
+
+
+# Code here
+
 
 # [9, 8, 7]
 ```
 
     [9, 8, 7]
-    
+
 
 We can see that the output from `takeOrdered()`, when reversed, is exactly the same as the `top()` action. 
 
@@ -171,9 +193,17 @@ We can see that the output from `takeOrdered()`, when reversed, is exactly the s
 
 The `reduce()` action reduces the elements of a RDD to a single value by applying a function that takes two parameters and returns a single value.
 
+Spark reduce is an action operation of RDD which means it will trigger all the lined up transformation on the base RDD (or in the DAG) which are not executed and than execute the action operation on the last RDD. This operation is also a wide operation. In the sense the execution of this operation results in distributing the data across the multiple partitions.
+
+
 > **NOTE:** The function used with `reduce()` action should be **commutative** ( A+B = B+A ) and **associative** ((A+B)+C = A+(B+C)), as `reduce()` is applied at the partition level and then again to aggregate results from partitions.
 
 If commutative and associative propoerties of the function don't hold, the results from `reduce()` will be inconsistent. Reducing locally at partitions makes `reduce()` very effective. 
+
+![](reduce.gif)
+
+In above image you can see that we are doing cumulative sum of numbers from 1 to 10 using reduce function. Here reduce method accepts a function $(accum, n) => (accum + n)$. This function initialize $accum$ variable with default integer value 0, adds up an element every when reduce method is called and returns final value when all elements of RDD X are processed. It returns the final value rather than another RDD.
+
 
 Let's try to apply `reduce()` action with a simple `add` operator from Python's `operator` module. 
 
@@ -191,7 +221,10 @@ from operator import add
 
 ```python
 # Sum the RDD using reduce() with imported add method
-filteredRDD.reduce(add)
+
+
+# Code here
+
 
 # 45
 ```
@@ -206,7 +239,10 @@ filteredRDD.reduce(add)
 
 ```python
 # Sum using reduce with a lambda function and check the output of a+b vs. b+a
-filteredRDD.reduce(lambda a, b: a + b), filteredRDD.reduce(lambda a, b: b + a)
+
+
+# Code here
+
 
 # (45, 45)
 ```
@@ -223,7 +259,9 @@ Due to commutative and associative property of addition, we will observe the sam
 
 ```python
 # Note that subtraction is not both associative and commutative
-filteredRDD.reduce(lambda a, b: a - b), filteredRDD.reduce(lambda a, b: b - a)
+
+# Code here
+
 ```
 
 
@@ -245,11 +283,14 @@ We can apply `takeSample()` with replacement set to True and False to observe th
 
 > **`RDD.takeSample(withReplacement, num, seed)`**
 
+- Use `takesample()` to take 5 values from `filteredRDD`.
+
 
 ```python
 # takeSample reusing elements and set number of samples to 5
 
-filteredRDD.takeSample(withReplacement=True, num=5)
+
+# Code here
 
 # [4, 3, 7, 9, 8]
 ```
@@ -257,15 +298,16 @@ filteredRDD.takeSample(withReplacement=True, num=5)
 
 
 
-    [4, 3, 7, 9, 8]
+    [4, 7, 8, 0, 0]
 
 
 
 
 ```python
-# takeSample not reusing elements and set number of samples to 5
+# takeSample not reusing elements and set number of samples to 5 - repeat above code
 
-filteredRDD.takeSample(withReplacement=False, num=5)
+
+# Code here
 
 # [5, 4, 2, 9, 7]
 ```
@@ -273,7 +315,7 @@ filteredRDD.takeSample(withReplacement=False, num=5)
 
 
 
-    [5, 4, 2, 9, 7]
+    [1, 7, 8, 0, 9]
 
 
 
@@ -284,7 +326,9 @@ If we run above cells repeatedly, we will see that the output changes everytime 
 # Set seed for predictability
 # Try reruning this cell and the cell above -- the results from this cell will remain constant
 
-filteredRDD.takeSample(withReplacement=False, num=5, seed=200)
+
+# Code here
+
 
 # [8, 6, 5, 7, 2]
 ```
@@ -298,21 +342,27 @@ filteredRDD.takeSample(withReplacement=False, num=5, seed=200)
 
 Finally, The `countByValue()` action returns the count of each unique value in the RDD as a dictionary that maps values to counts, using `RDD.countByValue()`. 
 
-Using following list, create a new RDD and apply the countByValue() action to get frequency of unique elements. 
-[1, 2, 3, 1, 2, 3, 1, 2, 1, 2, 3, 3, 3, 4, 5, 4, 6]
+- Using following list, create a new RDD and apply the `countByValue()` action to get frequency of unique elements. 
+
+`[1, 2, 3, 1, 2, 3, 1, 2, 1, 2, 3, 3, 3, 4, 5, 4, 6]`
 
 
 
 ```python
 # Create new base RDD to show frequency of values using countByValue and show contents 
-testRDD = sc.parallelize([1, 2, 3, 1, 2, 3, 1, 2, 1, 2, 3, 3, 3, 4, 5, 4, 6])
-print(testRDD.countByValue())
+
+
+# Code here
+
 
 # defaultdict(<class 'int'>, {1: 4, 2: 4, 3: 5, 4: 2, 5: 1, 6: 1})
 ```
 
     defaultdict(<class 'int'>, {1: 4, 2: 4, 3: 5, 4: 2, 5: 1, 6: 1})
-    
+
+
+## Additional Reading 
+- [RDD Transformations and Actions Summary](https://www.analyticsvidhya.com/blog/2016/10/using-pyspark-to-perform-transformations-and-actions-on-rdd/)
 
 ## Summary
 
